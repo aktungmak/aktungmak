@@ -1,0 +1,132 @@
+Article 3
+
+I have been thinking about actor-based systems a lot over the past year and I had come up with a few system concepts. I put the idea to one side for a few months but this week it came back to the front of my mind and after some further consideration I now think that I have a simple yet potentially useful specification. I will try to describe it in sufficient detail here.
+
+I will give this system the name “act6” for now, since all my inspiration has been used up on the design and I have nothing left for the name.
+
+Concept
+
+act6 is a runtime that contains one or more actors that run concurrently, and can communicate with each other only by sending messages. The user of the system provides definitions of the actors and the protocols by which they will communicate, as well as a specification of which actors should be spawned when the runtime starts. These actors can then spawn other actors or terminate. The runtime terminates when there are no running actors left.
+
+Each actor has a set of state variables defined by the user, a set of slots which defines what messages it knows about and a mailbox, which is a FIFO queue of messages that it has received. The actor processes each of the messages sequentially, potentially updating its state variables each time.
+
+Execution proceeds in a round-robin approach, giving each actor the opportunity to consume one message. This pre-emptive approach should avoid deadlock and lovelock, but this remains to be proven.
+
+By defining well-typed slots and having each actor declare what protocols it supports, it will be possible to statically check that all message sends will be handled by the recipient. This is in contrast to some other actor-based systems which cannot perform this kind of static checking. Additionally, the round-robin execution approach should ensure that progress can always be made and there are no deadlock situations.
+
+Modules
+
+I will describe the structure of act6 code from a top-down approach, starting with the module level.
+
+A module groups together and namespaces protocol and actor definitions. In earlier iterations it could also contain function definitions, but this is not currently needed since this iteration is intended to be implemented in lisp so the functions can be defined in normal lisp code.
+Additionally, previous iterations specified exactly what was imported and exported by the module but this does not seem to be useful in this iteration, so it will not be described further for now.
+
+Protocol Definitions
+
+A protocol definition has a name (that is namespaces by the module that it is in) and specifies a set of slots that must be provided by an actor that declares it provides the protocol.
+
+Protocols can also compose other protocols, in which case the required slots of the new protocol is the union of all the composed protocols.
+
+Each actor definition is implicitly a protocol definition with the same name and exactly the set of slots that the actor provides.
+
+Protocols are also used to define the type of a pid value, ensuring that the actor with that pid has been statically type checked to be able to support that protocol.
+
+Actor Definitions
+
+The core concept of the system is the actor definition which describes how an instance of an actor behaves and what protocols it implements.
+
+An actor definition consists of several parts. Firstly, it has a name (which is namespaces by the module that it is defined in) and this is used to identify it when a new instance should be spawned.
+
+The actor can specify that it implements protocols other than its own default protocol, in which case these are listed.
+
+The actor definition contains zero or more state variables.
+
+When a new actor is spawned, an initialisation function is called which has a defined set of parameters, which are provided as arguments to the call to the spawn function. This initialisation function is responsible for setting the state variables to their initial values and also spawning any other actors that may be needed.
+Optionally, a de-initialisation function can be provided which will run just before the actor instance terminates.
+
+Finally, all the slot definitions are provided. A slot has a name and a set of arguments which have defined types. The body of the slot specifies what happens when such a message is received. This can involve one or more of the following
+some computation
+an update to the state variables
+sending of messages to other actors
+spawning of new actors
+It is not clear yet how the body of the slot should be expressed. The simple option is a sequence of expressions to be executed. However, it may be interesting to define it as a logic expression without backtracking. For now, we assume it is simply a sequence of expressions.
+
+(protocol (notify integer))
+
+(actor counter
+	(var	count integer)
+	(init	[] (set count 0)
+		[start] (set count start))
+	
+	(slot	increment [n integer] 
+		(set count (+ count n))
+	(slot	get [who notify]
+		(send who (notify n)))	
+
+act6 code consists of actor definitions and protocol definitions that are grouped together into modules
+an actor definition specifies:
+the name of the actor, which is used to refer to it when spawning a new instance of it
+an initialisation function, which takes an arbitrary set of parameters and initialises the state variables
+a deinitialisation function, which is run when the actor dies
+a set of state variables which can be changed in response to incoming messages
+a set of slots that describe the messages that the actor understands
+a set of protocols that the actor declares that it supports
+the definition is checked before runtime to ensure that the actor has the slots to fulfil its protocol declarations  
+a protocol definition is a set of slots that an actor must provide if it declares that it conforms to a protocol
+this is checked before runtime
+a slot is a block of code that is executed in response to a received message
+it has input parameters that are typed
+I am not sure how the code should look - should it be a logic expression without backtracking, or just a list of expressions?
+a slot has access to all the state variables of the actor
+slots always execute sequentially so they can safely modify all the state variables
+slots have no return value
+slots may not execute blocking code
+blocking operations are actors provided by the system
+an actor can spawn one and provide its pid and it will get messages when data is available
+an actor is a self-contained unit of execution
+actors are spawned by referring to their name and providing the parameters required by their init function
+each actor has an id which uniquely identifies it in the runtime, which is returned when it is spawned
+each actor has a mailbox which is a list of messages that it has received
+the actor works through the mailbox, handling each message sequentially
+if an actor has the pid of another actor, it can send it a message
+the only way an actor knows a pid is if it receives it in a message or it spawned the actor
+each actor has some state that can be updated each time it receives a message
+
+runtime is a set of actors running concurrently
+the runtime uses a round robin approach to give each actor a chance to consume one message
+the runtime provides several built in functions
+spawn is used to create a new actor given its name and the arguments to its init function
+(spawn counter (start))
+returns the pid of the spawned actor
+spawn_link is the same, but this actor will also receive a message when the spawned actor terminates
+send will send a message to the specified pid
+(send pid (slot-name args…))
+sending is completely asynchronous and has no meaningful return value
+
+pids have types!
+define protocols which are sets of slots
+
+actors specify what protocols they provide, this can be checked ahead of runtime to ensure all message sends succeed
+
+module contains actor and protocol definitions 
+
+protocol is a list of message names and signatures 
+
+actor definition contains name, list of supported protocols, init and deinit functions, state variables and slot definitions 
+
+a slot has a name and a list of parameters, which are typed. it’s body is either:
+- a logic program without backtracking
+- a list of expressions that will be executed in order
+the logic option would be cool but not sure how practical it would be
+
+no blocking calls are possible. slots have no return value. results are provided by a callback message
+
+blocking operations are actors provided by the system. an actor can spawn one and provide its pid and it will get messages when data is available
+
+spawn and spawn-link are provided. when a process crashes its parent receives a message to its error slot. it can handle the error message or die and pass the error on to its parent
+
+a program consists of module definitions and a “run specification” which is a list of actors that should be started. the runtime starts the provided actors and waits until there are no more actors left running
+
+messages are sent one at a time and each running actor gets a turn to process the next message in its mailbox. I think that this prevents deadlock/livelock...
+
+use a lisp to build the prototype, since the module definitions can just be macros and slot bodies can just be arbitrary lisp code. need to ensure that no blocking calls are made though...

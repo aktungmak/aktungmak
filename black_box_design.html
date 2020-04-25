@@ -1,0 +1,35 @@
+Analyse and design systems by thinking about their inputs and outputs
+
+Start by thinking of the domain issue as a process, what inputs do we give the system and what outputs should it have?
+
+Specify the requirements of that output (how is it different from the input?). That list of requirements is a list of candidates for sub-boxes. recurse.
+
+If this is not possible, break the system into individual processes and repeat.
+
+As I consider the incoming and outgoing bank file processing systems that we are working on, I keep thinking of how we can structure the system in a better way. My conclusion is always the same - the simpler the solution, the better.
+
+Previously, I tried to think of the system as individual pieces, and try to group concepts that are similar together. For example, I would consider several different modules, some containing the incoming file handling, others that would handle the writing to the database etc. These modules were grouped based on the functionality they have, and not really considered in terms of how they work together in a flow.
+
+To drive the simplification of the design, I have begun to consider the overall system as a black box, and then try to identify what the inputs and outputs of this black box are and how they map to each other. If there does not appear to be a clear one-directional mapping from the inputs to outputs, then I open the black box and think about the sub-black boxes and see if they can be described as a simple one-way process mapping from inputs to outputs.
+To use the case at hand as an example, we are converting bank files to JSON messages on Kafka and also JSON messages on Kafka into bank files. The inputs to this black box are bank files and JSON messages and the  outputs are bank files and JSON messages.. Since there does not appear to be a clear one-way mapping from one to the other, this should be broken down into two sub-systems, the incoming and outgoing systems. Nevertheless, we should not forget the relationship of these processes and the fact that they should be defined as the inverse of one another.
+
+If we continue to apply this process, we eventually identtocess steps ify the simplest possible processes, and can clearly define the interfaces between them. Sometimes we miss outputs and inputs when we think about the process in more detail, for example the incoming and outgoing process need to write to the database for bookkeeping and persistence. This adds and extra input and means that we need to add further requirements in terms of the expected inputs and outputs of the overall system, and then try to
+
+- what is a function?
+- a series of steps? n + 5, n' * 2,
+- a mapping from one domain to another? 1 -> 12 or 4->"fyra"
+- the final decomposition of a function is just like a hash map, but this is often impractical
+- disclaimer, I am not a formally trained expert
+- looney tunes cake-o-matic takes ingredients and clean dishes in, outputs a cake and clean dishes
+- rules of thumb, e.g clean plates in to clean plates out shows that they are not needed or that this box needs to be decomposed further to reveal a missing step
+
+Related: module dependency graphs should be unidirectional and acyclic
+
+- units (e.g. modules in erlang, classes in python) should form a hierarchy of dependencies
+- the very top of the hierarchy is the entry point to the process ("main")
+- as we descend into the dependencies of the main entry point (concretely, the functions that it calls) we dig into more and more specific code
+- modules higher up in the hierarchy can call downwards, but those lower down should never call upwards to avoid cycles in the dependency graph
+- this simplifies unit testing since the lower layers can easily be isolated through mocking
+- avoiding cyclic dependencies makes modifications of the tree simpler
+
+
