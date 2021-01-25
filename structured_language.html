@@ -1,42 +1,76 @@
-Article 2
+<h2>Article 2</h2>
+<hr/>
 
+<p>
 Here I aim to describe a constructed language that uses features of natural languages but applies them in regular ways to create a language that is easy to process in a structured way (e.g. by a machine with limited intelligence) but is also familiar to humans.
+</p>
 
+<p>
 The constructed language centres around sentences, which are groups of words with a fixed structure which together form a proposition of truth. The focus is on the “metadata” of the words and the structure of the sentence rather than the specific words used in the sentence. (add an example here?) In this way, each word in the sentence has information about its role and relationship to the others.
+</p>
 
+<p>
 By factoring out the specific nouns, verbs, adjectives etc the structure is no longer tied to a particular natural language. Leaving the specific words as free variables provides two benefits:
+</p>
 
-The language can be “translated” to an approximation of a natural language easily, by substituting the variable part of the word (what should I call that?) with the corresponding word in the target natural language.
-The structure of a sentence is somewhat separate from its meaning, allowing us to analyse and compare the structures of several sentences independently of their specific meanings.
+<ol>
+<li>The language can be “translated” to an approximation of a natural language easily, by substituting the variable part of the word (what should I call that?) with the corresponding word in the target natural language.</li>
+<li>The structure of a sentence is somewhat separate from its meaning, allowing us to analyse and compare the structures of several sentences independently of their specific meanings.</li>
+</ol>
 
+<p>
 I will provide further examples of this in the text below. I will use the syntax of the logic programming language Prolog as a notation when describing the language, since it is concise and easy to understand. It is likely that any real implementation of such a language would need to develop its own notation to make the language more useable and easy to read.
+</p>
 
-—
+<hr/>
 
+<p>
 Let us begin with a very simple language and add more and more details to build up to a more expressive language. It is possible that intermediate stages will produce languages with sufficient expressivity for certain applications.
+</p>
 
+<p>
 The first language we will describe is perhaps the simplest possible and might be suitable for use by Wittgenstein’s builders. It can be expressed as:
+</p>
 
+<pre>
 sentence(noun(N)).
+</pre>
 
+<p>
 Here we specify that a sentence is a structure with one element, and the only element allowed is a noun. The noun has one variable N, which is the specific thing that it names. Note that use the term “noun” to mean a particular object or concept, and not a noun phrase or clause or other more general meaning that the term “noun” can connote.
+</p>
 
+<p>
 To illustrate by way of example, here are some valid sentences in this language:
+</p>
 
+<pre>
 sentence(noun(slab)).
 sentence(noun(block)).
+</pre>
 
+<p>
 The atoms slab and block are of course english words, but the following has equivalent meaning:
+</p>
 
+<pre>
 sentence(noun(dalle)).
 sentence(noun(bloc)).
+</pre>
 
+<p>
 The variable N is used to specify what the particular noun is, but is of limited interest to us since we are primarily focused on describing the structure of the language here rather than the nouns that can be substituted for the variables.
+</p>
 
+<p>
 Notice that sentence() is not valid, i.e. one may not say nothing in this language!
+</p>
 
+<p>
 This language is perfectly sufficient for naming things, but it is not at all clear what the intention of the naming is. One possible improvement to this language (which is worth mentioning here but will not be explored for now) is to borrow some noun cases from our friends in Finland and use these to help us communicate meaning with the noun. Our language would then look like this:
+</p>
 
+<pre>
 sentence(noun(N, C)) :-
   noun_case(C).
 
@@ -58,46 +92,84 @@ noun_case(translative).
 noun_case(instructive).
 noun_case(abessive).
 noun_case(comitative).
+</pre>
 
+<p>
 With all these cases, we can hint at quite a lot of meanings now. For example, noun(box, elative) might suggest something is coming out of the box, whereas noun(box, illative) could give us the impression that something is going into the box. Unfortunately, these are just impressions and it is not possible to articulate the “something” in this very limited language.
+</p>
 
+<p>
 Furthermore, we still cannot express anything about the plurality of the noun, whether it is definite or indefinite, or other grammatical attributes, so there are still some elements missing from our noun structure. For now though, we will stick with the simple noun/1 structure and turn our attention to verbs.
+</p>
 
----
+<hr/>
 
+<p>
 Let us now add sentence/2 to our repertoire, which looks like this:
+</p>
 
+<pre>
 sentence(noun(N), verb(V)).
+</pre>
 
+<p>
 This is now a relationship between two words. Note that the order is not semantically important, we could just as well have chosen
+</p>
 
-sentence(verb(V), noun(N)). 
+<pre>
+sentence(verb(V), noun(N)).
+</pre>
 
+<p>
 however for the sake of simplicity and consistency we will stick to one order.
+</p>
 
+<p>
 Note that by removing any semantic meaning that word order might have, we also limit the expressivity of the language (for now). For example, a valid sentence could be:
+</p>
 
+<pre>
 sentence(noun(dog), verb(eat)).
+</pre>
 
+<p>
 (Remember - the specific atoms “dog” and “eat” have no grammatical meaning here, they are purely a mnemonic to help the reader link the components of the sentence with known concepts).
+</p>
 
+<p>
 Since the order is not important, we could squint at this two-word structure and come up with the following potential interpretations from an English perspective:
+</p>
 
+<pre>
 “The dog eats”
 “Eat a dog”
+</pre>
 
+<p>
 The issue is that we have not defined the role of the noun in the sentence - more specifically, what case is it in? This ambiguity is a fault of the language specification, since it is not specific enough. If we bring back noun/2 from the previous chapter, then we can be more clear in our intention:
+</p>
 
+<pre>
 sentence(noun(dog, nominative), verb(eat)).
+</pre>
 
+<p>
 The choice of a verb which is both transitive and intransitive was perhaps unfortunate. Now the case has been specified, it is clear that the verb is specified in an intransitive sense. If I had chosen
+</p>
 
+<pre>
 sentence(noun(dog), verb(swim)).
+</pre>
 
+<p>
 where the verb “to swim” has only an intransitive meaning, the possibilities of interpretation are reduced but it is nonetheless unclear unless we use noun/2 to specify the case of the noun and thereby its role in the sentence.
+</p>
 
+<p>
 Although we are now more specific about the case of the noun, the verb is still essentially in its infinitive form and does not convey any information about aspect, tense or mood. To do this, we can extend the verb/1 structure to become verb/4:
+</p>
 
+<pre>
 verb(V, Tense, Aspect, Mood) :-
   tense(Tense),
   aspect(Aspect),
@@ -112,23 +184,35 @@ aspect(imperfect).
 
 mood(indicative).
 mood(subjunctive).
+</pre>
 
+<p>
 This now encodes three extra dimensions onto the verb, enabling us to express the location in time of the verb, whether its duration is bounded or unbounded and how this statement corresponds to reality. To keep the example concise, a limited selection of values for tense/1, aspect/1 and mood/1 have been chosen. With careful consideration and definition, these will be expanded to enable greater expressivity.
+</p>
 
+<p>
 Let us put these to use, and try to translate them to (grammatically questionable) English:
+</p>
 
+<pre>
 sentence(noun(whale, nominative), verb(swim, future, perfect, indicative)).
   -> “Whale will swim"
 
 sentence(noun(food, accusative), verb(eat, past, imperfect, subjunctive)).
   -> “Food may have been being eaten"
+</pre>
 
+<p>
 This enables a good deal of expression with only two words! However, as noted in the previous chapter we are still missing some desirable details regarding the grammatical role of the noun, so let us return to the noun/2 structure and add some missing details. What is hopefully becoming clear is that with each additional set of constraints we make available, we can be more specific in the meaning that is conveyed as long as the constraints themselves are well defined.
+</p>
 
-—
+<hr/>
 
+<p>
 Let us now replace noun/2 with an extended form called noun/4:
+</p>
 
+<pre>
 noun(N, Case, Number, Definiteness) :-
   noun_case(Case),
   noun_number(Number),
@@ -145,9 +229,13 @@ noun_number(N) :-
 noun_definiteness(definite).
 noun_definiteness(indefinite).
 noun_definiteness(partitive).
+</pre>
 
+<p>
 With these additional constraints, we can remove the ambiguity present in the examples of the previous chapter:
+</p>
 
+<pre>
 sentence(noun(whale, nominative, singular, definite), verb(swim, future, perfect, indicative)).
   -> “The whale will swim”
 
@@ -156,27 +244,45 @@ sentence(noun(whale, nominative, 3, definite), verb(swim, past, perfect, subjunc
 
 sentence(noun(food, accusative, singular, partitive), verb(eat, past, imperfect, indicative)).
   -> “Some food was eaten"
+</pre>
 
+<p>
 The role of the noun relative to the verb is now more clear, however the last example shows a somewhat vulgar use of the accusative case to indicate a passive voice. This highlights that there are still some elements missing in our treatment of verbs and nouns, but for now let us partially ignore this and address a greater flaw in our language - the fact that we are limited to just two words!
+</p>
 
---
+<hr/>
 
+<p>
 As promised in the previous chapter, let us add an extra noun to our sentence/2 structure to create sentence/3:
+</p>
 
+<pre>
 sentence(noun(N1, C1, Number1, Definiteness1),
          verb(V, Tense, Aspect, Mood),
          noun(N2, C2, Number2, Definiteness2)) :-
   C1 \= C2.
+</pre>
 
+<p>
 This proposition now expresses the relationship between three words: a verb and two nouns. We now have 12 degrees of freedom at our disposal and that means that there are some combinations that are acceptable according to our rules, but do not make sense in practice. For example, what does it mean to have a sentence/3 with two nouns in the accusative case? It appears that the expressiveness of our notation is too great, and it does not lexically prohibit us from expressing invalid propositions.
+</p>
 
+<p>
 In an earlier chapter, it was specified that the order of the words is not important. However, to maintain consistency and to eliminate lexically the problems outlined above, it is perhaps desirable to reformulate the concept of the sentence structure as follows:
+</p>
 
+<pre>
 sentence(Verb, NomNoun, AccNoun)?
 sentence(Verb, NomNoun, AccNoun, DatNoun)?
+</pre>
 
+<p>
 In this case, we eliminate the Case attribute of the noun structure and instead articulate this through its position in the sentence structure. This reenforces the intention of the sentence structure as a relationship between words, since the case distinction is nothing more than a marker of the relationship between a noun, its verb and (potentially) other nouns in the sentence.
+</p>
 
+<hr/>
+
+<p>
 Still to cover:
 Do we need to encode the “voice” parameter of a verb, or is it implicit in the cases of the nouns?
 negation
@@ -186,10 +292,13 @@ grouping of words with conjunctions: “he eats cakes and pies” -> sentence(no
 mapping of this language into natural languages, lossy nature of this process
 european bias of the grammatical choices
 potential uses of this language
+</p>
 
-References:
+<h3>References:</h3>
 
-https://adoneilson.com/int/gi/
-Philosophical Investigations
-https://archive.org/details/AGrammarOfTheArabicLanguageV1/page/n21/mode/2up
-https://www.cs.unm.edu/~luger/ai-final2/CH8_Natural%20Language%20Processing%20in%20Prolog.pdf
+<ul>
+<li>https://adoneilson.com/int/gi/</li>
+<li>Philosophical Investigations - Ludwig Wittgenstein</li>
+<li>https://archive.org/details/AGrammarOfTheArabicLanguageV1/page/n21/mode/2up</li>
+<li>https://www.cs.unm.edu/~luger/ai-final2/CH8_Natural%20Language%20Processing%20in%20Prolog.pdf</li>
+</ul>
